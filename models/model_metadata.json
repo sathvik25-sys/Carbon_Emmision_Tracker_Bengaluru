@@ -1,0 +1,21 @@
+{
+  "model_type": "GradientBoostingRegressor",
+  "dataset_samples": 5000,
+  "train_samples": 4000,
+  "test_samples": 1000,
+  "test_r2": 0.9874,
+  "train_r2": 0.9975,
+  "test_mae_kg": 3.99,
+  "test_rmse_kg": 8.19,
+  "top_features": {
+    "per_capita_kwh": 43.97,
+    "main_mode_car": 16.51,
+    "commute_monthly_km": 15.44,
+    "main_mode_cab": 13.85,
+    "vehicle_age": 4.61,
+    "one_way_distance_km": 1.93,
+    "congestion_distance_interaction": 1.82,
+    "main_mode_two_wheeler": 0.61
+  },
+  "synthetic_notice": "Trained on 5,000 simulated Bengaluru commuter profiles with non-linear congestion & aging dynamics for academic demonstration."
+}

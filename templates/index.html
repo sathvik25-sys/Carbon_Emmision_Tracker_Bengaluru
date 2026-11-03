@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bengaluru Carbon Emission Tracker | ML & Tier-1 Footprint Engine</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter & Space Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Space Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md">
+          <i data-lucide="leaf" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Bengaluru Carbon Tracker</h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
+              Prototype v1.0
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 hidden sm:block">Machine Learning & Tier-1 Emission Estimation for Daily Activities (Bengaluru, KA)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button id="btn-print-receipt-nav" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span class="hidden md:inline">Print Receipt</span>
+        </button>
+        <a href="#methodology-section" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>Assumptions & Factors</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Demo Presets Bar -->
+  <section class="bg-gradient-to-r from-emerald-900 via-slate-900 to-teal-950 text-white py-3 border-b border-emerald-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+        <div class="flex items-center space-x-2 text-xs text-emerald-300 font-medium">
+          <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
+          <span>Instant Demo Presets:</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2" id="preset-buttons-container">
+          <button data-preset="whitefield_techie" class="preset-btn px-2.5 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20 text-white transition border border-white/15">
+            🚗 Whitefield Techie (Car)
+          </button>
+          <button data-preset="metro_commuter" class="preset-btn px-2.5 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20 text-white transition border border-white/15">
+            🚇 Indiranagar (Metro)
+          </button>
+          <button data-preset="twowheeler_rider" class="preset-btn px-2.5 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20 text-white transition border border-white/15">
+            🛵 E-City (Two-Wheeler)
+          </button>
+          <button data-preset="college_student" class="preset-btn px-2.5 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20 text-white transition border border-white/15">
+            🚌 Koramangala (BMTC)
+          </button>
+          <button data-preset="remote_worker" class="preset-btn px-2.5 py-1 text-xs rounded-md bg-white/10 hover:bg-white/20 text-white transition border border-white/15">
+            💻 HSR Freelancer (WFH)
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1">
+
+    <!-- Notification / Error Banner -->
+    <div id="error-banner" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm flex items-start space-x-3">
+      <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+      <div id="error-banner-text" class="flex-1"></div>
+      <button onclick="document.getElementById('error-banner').classList.add('hidden')" class="text-red-400 hover:text-red-600">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- LEFT COLUMN: Input Activity Form (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">Activity Inputs</h2>
+              <p class="text-xs text-slate-500">Enter your daily transit and monthly household electricity data</p>
+            </div>
+            <button id="btn-reset-form" class="text-xs text-slate-400 hover:text-slate-600 flex items-center space-x-1" title="Reset all fields">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <form id="carbon-form" class="mt-5 space-y-5" onsubmit="return false;">
+
+            <!-- SECTION 1: Daily Commute -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                <span>1. Primary Daily Commute</span>
+              </div>
+
+              <!-- Main Commute Mode -->
+              <div>
+                <label for="main_mode" class="block text-xs font-semibold text-slate-700 mb-1">
+                  Main Commute Mode <span class="text-red-500">*</span>
+                </label>
+                <select id="main_mode" name="main_mode" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition">
+                  <option value="car">Personal Car (Solo / Drive)</option>
+                  <option value="two_wheeler" selected>Two-Wheeler (Motorcycle / Scooter)</option>
+                  <option value="namma_metro">Namma Metro (BMRCL)</option>
+                  <option value="bmtc_bus">BMTC Bus</option>
+                  <option value="auto">Auto Rickshaw (3-Wheeler)</option>
+                  <option value="cab">Cab / Taxi (Uber / Ola)</option>
+                  <option value="walk_cycle">Walking / Cycling (Active)</option>
+                </select>
+                <p id="mode-desc-text" class="mt-1 text-[11px] text-slate-500"></p>
+              </div>
+
+              <!-- One-way Distance & Days Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="one_way_distance_km" class="block text-xs font-semibold text-slate-700 mb-1">
+                    One-Way Distance (km) <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="one_way_distance_km" name="one_way_distance_km" step="0.5" min="0" max="300" value="13.0"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-10 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">km</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Round trip: <span id="round-trip-preview" class="font-semibold text-slate-600">26 km/day</span></div>
+                </div>
+
+                <div>
+                  <label for="commute_days_per_month" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Commute Days / Month <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="commute_days_per_month" name="commute_days_per_month" min="0" max="31" value="22"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-12 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">days</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Monthly: <span id="monthly-km-preview" class="font-semibold text-slate-600">572 km</span></div>
+                </div>
+              </div>
+
+              <!-- Rush Hour Share (Congestion in Bengaluru) -->
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="rush_hour_pct" class="text-xs font-semibold text-slate-700 flex items-center space-x-1">
+                    <span>Rush Hour Share (% trips)</span>
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400" title="Bengaluru peak hours (8-11 AM, 5-8 PM) cause heavy idle fuel loss"></i>
+                  </label>
+                  <span id="rush_hour_val" class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    65%
+                  </span>
+                </div>
+                <input type="range" id="rush_hour_pct" name="rush_hour_pct" min="0" max="100" step="5" value="65"
+                       class="w-full accent-emerald-600 cursor-pointer">
+                <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                  <span>0% (Free flow)</span>
+                  <span>50% (Mixed)</span>
+                  <span class="text-amber-600 font-medium">100% (Silk Board Gridlock)</span>
+                </div>
+              </div>
+
+              <!-- Vehicle Age (Conditional) -->
+              <div id="vehicle-age-container">
+                <label for="vehicle_age" class="block text-xs font-semibold text-slate-700 mb-1">
+                  Vehicle Age (years)
+                  <span class="text-[11px] font-normal text-slate-400">(for personal vehicles/auto)</span>
+                </label>
+                <div class="relative">
+                  <input type="number" id="vehicle_age" name="vehicle_age" min="0" max="30" step="1" value="4"
+                         class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-12 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                  <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">yrs</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">Accounts for BS-norm wear & engine efficiency decline (+2%/yr).</p>
+              </div>
+            </div>
+
+            <!-- SECTION 2: Other Weekly Travel -->
+            <div class="space-y-3 pt-3 border-t border-slate-100">
+              <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md">
+                <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                <span>2. Other Travel (Weekly Errands & Leisure)</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="other_travel_mode" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Other Travel Mode
+                  </label>
+                  <select id="other_travel_mode" name="other_travel_mode" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="auto">Auto Rickshaw</option>
+                    <option value="two_wheeler" selected>Two-Wheeler</option>
+                    <option value="car">Personal Car</option>
+                    <option value="cab">Cab / Taxi</option>
+                    <option value="bmtc_bus">BMTC Bus</option>
+                    <option value="namma_metro">Namma Metro</option>
+                    <option value="walk_cycle">Walk / Cycle</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="other_travel_distance_km" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Weekly Distance (km)
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="other_travel_distance_km" name="other_travel_distance_km" min="0" max="1000" step="1" value="25"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-10 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">km</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Approx. <span id="other-monthly-km-preview" class="font-semibold text-slate-600">108 km/mo</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: Household Electricity -->
+            <div class="space-y-3 pt-3 border-t border-slate-100">
+              <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                <span>3. Household Electricity (BESCOM Grid)</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="monthly_electricity_kwh" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Household Power (kWh/mo) <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="monthly_electricity_kwh" name="monthly_electricity_kwh" min="0" max="5000" step="5" value="160"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-12 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">kWh</span>
+                  </div>
+                  <p class="text-[10px] text-slate-400 mt-0.5">From your monthly BESCOM bill</p>
+                </div>
+
+                <div>
+                  <label for="household_members" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Household Members <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="number" id="household_members" name="household_members" min="1" max="50" step="1" value="2"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-14 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">people</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Per capita: <span id="per-capita-kwh-preview" class="font-semibold text-slate-600">80 kWh/person</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button & Controls -->
+            <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+              <button type="button" id="btn-calculate" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                <i data-lucide="calculator" class="w-5 h-5"></i>
+                <span>Calculate & Generate Receipt</span>
+              </button>
+
+              <button type="button" id="btn-run-ml" class="w-full py-2 px-4 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium rounded-xl transition flex items-center justify-center space-x-2">
+                <i data-lucide="brain-circuit" class="w-4 h-4 text-emerald-400"></i>
+                <span>Run Machine Learning Non-Linear Estimation</span>
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Dashboard, Receipts & What-If (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Top Metric Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-medium text-slate-500 block">Monthly Total</span>
+            <div class="mt-1 flex items-baseline space-x-1">
+              <span id="metric-monthly-total" class="text-xl sm:text-2xl font-bold text-slate-900">--</span>
+              <span class="text-xs text-slate-500">kg CO2e</span>
+            </div>
+            <span id="metric-tier-badge" class="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+              Calculating...
+            </span>
+          </div>
+
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-medium text-slate-500 block">Daily Average</span>
+            <div class="mt-1 flex items-baseline space-x-1">
+              <span id="metric-daily-avg" class="text-xl sm:text-2xl font-bold text-slate-900">--</span>
+              <span class="text-xs text-slate-500">kg/day</span>
+            </div>
+            <span class="text-[10px] text-slate-400 block mt-1">Across 30.4 days</span>
+          </div>
+
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-medium text-slate-500 block">Annual Total</span>
+            <div class="mt-1 flex items-baseline space-x-1">
+              <span id="metric-annual-total" class="text-xl sm:text-2xl font-bold text-slate-900">--</span>
+              <span class="text-xs text-slate-500">kg/yr</span>
+            </div>
+            <span class="text-[10px] text-slate-400 block mt-1">Annualized estimate</span>
+          </div>
+
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-medium text-slate-500 block">Trees to Offset</span>
+            <div class="mt-1 flex items-baseline space-x-1">
+              <span id="metric-trees-offset" class="text-xl sm:text-2xl font-bold text-emerald-600">--</span>
+              <span class="text-xs text-slate-500">trees</span>
+            </div>
+            <span class="text-[10px] text-slate-400 block mt-1">@ 21 kg CO2 / tree / yr</span>
+          </div>
+        </div>
+
+        <!-- Benchmark Comparison Bar -->
+        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span class="font-semibold text-slate-700">Benchmark Comparison (Monthly Footprint)</span>
+            <span id="benchmark-status-badge" class="text-[11px] font-semibold text-emerald-700">Aligned with Bengaluru avg</span>
+          </div>
+          <div class="space-y-2">
+            <div>
+              <div class="flex justify-between text-[11px] text-slate-500 mb-0.5">
+                <span>Your Monthly Footprint</span>
+                <span id="bar-user-val" class="font-bold text-slate-900">-- kg</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="bar-user-progress" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+              </div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+              <span>Bengaluru Urban Baseline: <strong>135 kg</strong></span>
+              <span>India National Avg: <strong>160 kg</strong></span>
+              <span>Global Avg: <strong>390 kg</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown Chart & Categories -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
+            <span>Emission Breakdown by Activity</span>
+            <span class="text-xs font-normal text-slate-400">Deterministic Tier-1 Factors</span>
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+            <div class="sm:col-span-5 flex justify-center">
+              <div class="relative w-44 h-44">
+                <canvas id="breakdownDoughnutChart"></canvas>
+              </div>
+            </div>
+
+            <div class="sm:col-span-7 space-y-3">
+              <!-- Commute Row -->
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="font-semibold text-slate-800">Daily Commute</span>
+                  </div>
+                  <div class="text-right">
+                    <span id="breakdown-commute-kg" class="font-bold text-slate-900">-- kg</span>
+                    <span id="breakdown-commute-pct" class="text-slate-400 ml-1">(--%)</span>
+                  </div>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div id="bar-commute-pct" class="bg-emerald-500 h-full rounded-full transition-all" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Other Travel Row -->
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                    <span class="font-semibold text-slate-800">Other Weekly Travel</span>
+                  </div>
+                  <div class="text-right">
+                    <span id="breakdown-other-kg" class="font-bold text-slate-900">-- kg</span>
+                    <span id="breakdown-other-pct" class="text-slate-400 ml-1">(--%)</span>
+                  </div>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div id="bar-other-pct" class="bg-teal-500 h-full rounded-full transition-all" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Household Electricity Row -->
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span class="font-semibold text-slate-800">Household Electricity (Per Capita)</span>
+                  </div>
+                  <div class="text-right">
+                    <span id="breakdown-elec-kg" class="font-bold text-slate-900">-- kg</span>
+                    <span id="breakdown-elec-pct" class="text-slate-400 ml-1">(--%)</span>
+                  </div>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div id="bar-elec-pct" class="bg-amber-500 h-full rounded-full transition-all" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MACHINE LEARNING ESTIMATION CARD -->
+        <div id="ml-card" class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-5 shadow-md border border-slate-700">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-700">
+            <div class="flex items-center space-x-2">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="cpu" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Machine Learning Non-Linear Model</h4>
+                <p class="text-[11px] text-slate-400">Gradient Boosting Regressor (R²: 0.9874, MAE: 3.99 kg CO2e)</p>
+              </div>
+            </div>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              Simulated Research Model
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3">
+            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+              <span class="text-[11px] text-slate-400 block">ML Predicted Monthly</span>
+              <div class="mt-1 flex items-baseline space-x-1">
+                <span id="ml-predicted-val" class="text-lg font-bold text-emerald-400">--</span>
+                <span class="text-xs text-slate-400">kg CO2e</span>
+              </div>
+              <span id="ml-confidence-range" class="text-[10px] text-slate-400 block mt-0.5">95% CI: [--, --]</span>
+            </div>
+
+            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+              <span class="text-[11px] text-slate-400 block">Factor Baseline</span>
+              <div class="mt-1 flex items-baseline space-x-1">
+                <span id="ml-baseline-val" class="text-lg font-bold text-slate-200">--</span>
+                <span class="text-xs text-slate-400">kg CO2e</span>
+              </div>
+              <span class="text-[10px] text-slate-400 block mt-0.5">Deterministic calculation</span>
+            </div>
+
+            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+              <span class="text-[11px] text-slate-400 block">Model Residual / Delta</span>
+              <div class="mt-1 flex items-baseline space-x-1">
+                <span id="ml-delta-val" class="text-lg font-bold text-amber-400">--</span>
+                <span class="text-xs text-slate-400">kg</span>
+              </div>
+              <span id="ml-delta-pct" class="text-[10px] text-slate-400 block mt-0.5">Delta vs baseline</span>
+            </div>
+          </div>
+
+          <!-- Feature Importance Ranking -->
+          <div class="mt-3 pt-3 border-t border-slate-700">
+            <span class="text-[11px] font-semibold text-slate-300 block mb-2">Key Drivers Learned by Model in Bengaluru:</span>
+            <div id="ml-features-container" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+
+          <div class="mt-3 text-[11px] text-slate-400 bg-slate-800/60 p-2.5 rounded border border-slate-700/80">
+            <strong class="text-amber-300">Methodological Disclosure:</strong> The ML model is trained on a simulated dataset of 5,000 Bengaluru commuter patterns incorporating non-linear traffic congestion and vehicle aging interaction dynamics. It serves as an academic demonstration of multi-variable non-linear regression; the deterministic factor calculator is the verified production reference.
+          </div>
+        </div>
+
+        <!-- WHAT-IF COMMUTE SCENARIO SIMULATOR -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-1.5">
+                <i data-lucide="shuffle" class="w-4 h-4 text-emerald-600"></i>
+                <span>"What-If" Commute Scenario Simulator</span>
+              </h3>
+              <p class="text-xs text-slate-500">Compare your current commute with cleaner Bengaluru transit alternatives</p>
+            </div>
+          </div>
+
+          <!-- Alternative Mode Comparison Cards -->
+          <div id="whatif-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- What-If Bar Chart -->
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <h4 class="text-xs font-semibold text-slate-700 mb-2">Monthly Emissions: Current Mode vs. Alternatives</h4>
+            <div class="h-48">
+              <canvas id="whatIfBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEMIZED CARBON RECEIPT SECTION (Thermal Paper Aesthetic) -->
+        <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                <i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i>
+                <span>Itemized "Carbon Receipt"</span>
+              </h3>
+              <p class="text-xs text-slate-500">Official student project emission breakdown slip</p>
+            </div>
+            <button id="btn-print-receipt-inner" class="inline-flex items-center space-x-1 text-xs font-semibold px-3 py-1.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+              <span>Print / Save</span>
+            </button>
+          </div>
+
+          <!-- Thermal Receipt Body -->
+          <div id="carbon-receipt-printable" class="carbon-receipt bg-white border border-slate-300 rounded-lg p-5 font-mono text-xs shadow-inner max-w-md mx-auto">
+            <div class="text-center pb-3 border-b border-dashed border-slate-300">
+              <div class="font-bold text-sm tracking-wider uppercase">BENGALURU URBAN CARBON AUDIT</div>
+              <div class="text-[10px] text-slate-500">DAILY ACTIVITIES EMISSION ESTIMATOR</div>
+              <div class="text-[10px] text-slate-500">BENGALURU, KARNATAKA, INDIA</div>
+              <div class="text-[9px] text-slate-400 mt-1" id="receipt-timestamp">--</div>
+              <div class="text-[9px] text-slate-400" id="receipt-id">REF: BLR-CARB-2026-0000</div>
+            </div>
+
+            <!-- Receipt Line Items -->
+            <div class="py-3 border-b border-dashed border-slate-300 space-y-2.5 text-[11px]">
+              <div>
+                <div class="flex justify-between font-bold">
+                  <span>1. COMMUTE (<span id="rcpt-commute-mode">--</span>)</span>
+                  <span id="rcpt-commute-kg">-- kg</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex justify-between">
+                  <span><span id="rcpt-commute-km">--</span> km/mo @ <span id="rcpt-commute-rate">--</span> kg/km</span>
+                  <span><span id="rcpt-rush-pct">--</span> rush hr</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-bold">
+                  <span>2. OTHER TRAVEL (<span id="rcpt-other-mode">--</span>)</span>
+                  <span id="rcpt-other-kg">-- kg</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex justify-between">
+                  <span><span id="rcpt-other-km">--</span> km/mo</span>
+                  <span>Weekly: <span id="rcpt-other-weekly">--</span> km</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-bold">
+                  <span>3. ELECTRICITY (BESCOM GRID)</span>
+                  <span id="rcpt-elec-kg">-- kg</span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex justify-between">
+                  <span><span id="rcpt-elec-kwh">--</span> kWh/person @ 0.716 kg/kWh</span>
+                  <span><span id="rcpt-elec-members">--</span> pax split</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Receipt Totals -->
+            <div class="py-3 border-b border-dashed border-slate-300 space-y-1.5 text-xs">
+              <div class="flex justify-between font-bold text-sm">
+                <span>TOTAL MONTHLY CO2e</span>
+                <span id="rcpt-total-monthly" class="text-emerald-700">-- kg</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span>DAILY AVERAGE</span>
+                <span id="rcpt-total-daily">-- kg/day</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span>ANNUALIZED ESTIMATE</span>
+                <span id="rcpt-total-annual">-- kg/yr</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span>OFFSET REQUIREMENT</span>
+                <span id="rcpt-trees" class="font-bold">-- Trees/yr</span>
+              </div>
+              <div class="flex justify-between text-slate-600 pt-1">
+                <span>FOOTPRINT STATUS</span>
+                <span id="rcpt-tier" class="font-bold uppercase">--</span>
+              </div>
+            </div>
+
+            <!-- Barcode & Eco Tip Footer -->
+            <div class="pt-3 text-center space-y-2">
+              <div class="text-[9px] text-slate-500 uppercase">
+                *** SMALL CHOICES MAKE A GREEN BENGALURU ***
+              </div>
+              <div class="barcode font-mono tracking-widest text-slate-400 text-xs py-1">
+                ||||| |||| |||||| |||| |||||||| |||| |||||
+              </div>
+              <div class="text-[8px] text-slate-400">
+                Verified with CEA Southern Grid Baseline v19.0 & ARAI Factors
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIONABLE REDUCTION TIPS -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+          <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center space-x-2">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
+            <span>Practical Bengaluru Reduction Recommendations</span>
+          </h3>
+          <div id="recommendations-container" class="space-y-2.5">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- METHODOLOGY & TRANSPARENT ASSUMPTIONS SECTION -->
+    <section id="methodology-section" class="mt-12 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Calculation Methodology & Emission Factors</h2>
+          <p class="text-xs text-slate-500">Peer-reviewed sources, official Indian baselines, and transparent modeling rules</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-600 mt-4 leading-relaxed">
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+            <span>1. Baseline Emission Factors (kg CO2e / km)</span>
+          </h4>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>Walking / Cycling:</strong> 0.000 kg CO2e/km (Zero direct tailpipe emissions).</li>
+            <li><strong>Namma Metro (BMRCL):</strong> 0.018 kg CO2e/pkm (Electric rail on Karnataka grid, regenerative braking, high passenger capacity).</li>
+            <li><strong>BMTC Bus:</strong> 0.028 kg CO2e/pkm (Fleet average of BMTC non-AC, AC Vajra, and EV buses divided across average 40 passengers).</li>
+            <li><strong>Auto Rickshaw:</strong> 0.065 kg CO2e/pkm (4-stroke LPG/CNG 3-wheeler in Bengaluru city traffic, avg 1.3 occupants).</li>
+            <li><strong>Two-Wheeler:</strong> 0.048 kg CO2e/pkm (100-150cc petrol commuter motorcycle/scooter, solo rider).</li>
+            <li><strong>Personal Car:</strong> 0.155 kg CO2e/pkm (Urban ICE petrol/diesel car with 1.2 average occupancy).</li>
+            <li><strong>Cab (Uber/Ola):</strong> 0.185 kg CO2e/pkm (Includes 20% deadheading mileage cruising without passenger).</li>
+          </ul>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+            <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+            <span>2. Household Electricity (BESCOM Grid)</span>
+          </h4>
+          <p>
+            Grid emission factor: <strong>0.716 kg CO2e / kWh</strong>.<br>
+            Derived from the <em>Central Electricity Authority (CEA) CO2 Baseline Database for the Indian Power Sector (User Guide v19.0)</em> for Southern Regional Grid, factoring Karnataka’s mix of Pavagada solar, wind, Sharavathi hydro, and Raichur/Kudgi thermal power.
+          </p>
+          <p>
+            Household consumption is divided per-capita: <code>Personal kWh = Total Household kWh / Household Members</code>.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+            <i data-lucide="clock" class="w-4 h-4 text-orange-500"></i>
+            <span>3. Bengaluru Rush-Hour Congestion Penalty</span>
+          </h4>
+          <p>
+            Bengaluru traffic (Silk Board, Outer Ring Road, Tin Factory) frequently slows average speeds to 10-14 km/h. Idle engine running and repeated acceleration increases fuel consumption:
+          </p>
+          <ul class="list-disc list-inside space-y-1">
+            <li>Car & Cab: Up to +35% penalty at 100% peak congestion.</li>
+            <li>Auto Rickshaw: Up to +25% penalty.</li>
+            <li>Two-Wheeler: Up to +20% penalty.</li>
+            <li>BMTC Bus: Up to +15% penalty.</li>
+            <li>Namma Metro & Active mobility: 0% penalty (unaffected by road traffic).</li>
+          </ul>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+            <i data-lucide="wrench" class="w-4 h-4 text-indigo-500"></i>
+            <span>4. Vehicle Ageing & Model Fallbacks</span>
+          </h4>
+          <p>
+            Older vehicles experience catalytic converter efficiency loss, BS-norm differences (BS3/BS4 vs BS6), and mechanical wear. Modeled at <strong>+2.0% additional emission per year</strong> (capped at +30%).
+          </p>
+          <p>
+            <strong>Transparent ML Fallback:</strong> If ML artifacts are uninitialized or missing, the system automatically falls back to this deterministic Tier-1 calculator with zero user interruption.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      <p class="font-medium text-slate-700">Bengaluru Carbon Emission Estimator — Student Academic Prototype</p>
+      <p class="mt-1">Built with FastAPI, Scikit-Learn, and Chart.js | Designed for Bengaluru Urban Mobility & Climate Awareness</p>
+    </div>
+  </footer>
+
+  <!-- App JavaScript -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

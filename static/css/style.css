@@ -1,0 +1,68 @@
+/* Bengaluru Carbon Emission Tracker Stylesheet */
+
+/* Thermal Carbon Receipt Styling */
+.carbon-receipt {
+  background-color: #fafafa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.carbon-receipt::before,
+.carbon-receipt::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-size: 12px 6px;
+}
+
+.barcode {
+  letter-spacing: 4px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  transform: scaleY(1.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print Stylesheet for Official Carbon Receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #carbon-receipt-printable,
+  #carbon-receipt-printable * {
+    visibility: visible;
+  }
+  
+  #carbon-receipt-printable {
+    position: absolute;
+    left: 50%;
+    top: 50px;
+    transform: translateX(-50%);
+    width: 380px !important;
+    border: 1px dashed #000 !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
